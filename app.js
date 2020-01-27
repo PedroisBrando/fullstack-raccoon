@@ -9,51 +9,41 @@ function filterByInstagram(obj) {
 }
 
 function filterByMediaAndMonth(obj) {
-  const medias = ['google_cpc', 'facebook_cpc', 'instagram_cpc'];
-  if (medias.some(el => obj.media.includes(el)) && obj.date.includes('/05/')) return true;
+  const medias = ["google_cpc", "facebook_cpc", "instagram_cpc"];
+  if (medias.some(el => obj.media.includes(el)) && obj.date.includes("/05/"))
+    return true;
 }
 
-function getPostsPromocao() {
-  return axios
-    .get(
-      "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get"
-    )
-    .then(response => {
-      var filtered = response.data.posts.filter(filterByPromocao);
-      return filtered;
-    });
-}
+const getPostsPromocao = async () => {
+  const response = await axios.get(
+    "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get"
+  );
+  var filtered = response.data.posts.filter(filterByPromocao);
+  return filtered;
+};
 
-function getPosts700() {
-  return axios
-    .get(
-      "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get"
-    )
-    .then(response => {
-      var filtered = response.data.posts.filter(filterByInstagram);
-      return filtered;
-    })
-}
+const getPosts700 = async () => {
+  const response = await axios.get(
+    "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get"
+  );
+  const filtered = await response.data.posts.filter(filterByInstagram);
+  return filtered;
+};
 
-function getPostsSomatorio() {
-  return axios
-    .get(
-      "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get"
-    )
-    .then(response => {
-      var filtered = response.data.posts.filter(filterByMediaAndMonth);
-      return filtered;
-    })
-}
+const getPostsSomatorio = async () => {
+  const response = await axios.get(
+    "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get"
+  );
+  var filtered = response.data.posts.filter(filterByMediaAndMonth);
+  return filtered;
+};
 
-function getPostsError() {
-  return axios
-    .get(
-      "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get_error"
-    ).then(response => {
-      return response.data.posts;
-    })
-}
+const getPostsError = async () => {
+  const response = await axios.get(
+    "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get_error"
+  );
+  return response.data.posts;
+};
 
 function compare(a, b) {
   if (a.price < b.price) {
@@ -75,50 +65,75 @@ function compare(a, b) {
 }
 
 function compareId(a, b) {
-  if (a.product_id < b.product) {
+  if (a.product_id < b.product_id) {
     return -1;
   }
-  if (a.product > b.product) {
+  if (a.product_id > b.product_id) {
     return 1;
   }
   return 0;
 }
 
-/*getPostsPromocao().then(res => {
-  res.sort(compare);
-  let teste = res[0].product_id;
-  res.map(data => {
-    if (data.product_id !== teste) console.log(data.product_id, data.price);
-    teste = data.product_id;
+const a = async () => {
+  const postsPromocao = [];
+  const posts = await getPostsPromocao();
+  posts.sort(compare);
+  let aux = posts[0].product_id;
+  posts.map(data => {
+    if (data.product_id !== aux) {
+      const post = {
+        product_id: data.product_id,
+        price: data.price
+      };
+      postsPromocao.push(post);
+    }
+    aux = data.product_id;
   });
-});
-*/
+  return postsPromocao;
+};
 
-/*getPosts700().then(res => {
-  res.sort(compare);
-  res.map(data => {
-    console.log(data.product_id, data.price);
-  })
-})
-*/
+const b = async () => {
+  const resposta = [];
+  const posts700 = await getPosts700();
+  posts700.sort(compare);
+  posts700.map(data => {
+    let post = {
+      product_id: data.product_id,
+      price: data.price
+    };
+    resposta.push(post);
+  });
+  return resposta;
+};
 
-/*getPostsSomatorio().then(res => {
+const c = async () => {
+  const postsMaio = await getPostsSomatorio();
   let somatorio = 0;
-  res.map(data => {
-    console.log(data.media, data.date, data.likes);
+  postsMaio.map(data => {
     somatorio += data.likes;
-  })
-  console.log(somatorio);
-})
-*/
+  });
+  return somatorio;
+};
 
-getPostsError().then(res => {
-  res.sort(compare);
-  let teste = res[0].product_id;
-  let erros = [];
-  res.map(data => {
-    console.log(data.product_id, data.price);
-    //if(data.product_id === teste && data.price !== teste.price) erros.push(data);
-  })
-  console.log(erros);
-})
+const d = async () => {
+  const err = await getPostsError();
+  err.sort(compareId);
+  let teste = err[0];
+  let errors = [];
+  err.map(data => {
+    if (data.product_id === teste.product_id && data.price !== teste.price)
+      errors.push(data.product_id);
+    teste = data;
+  });
+  return errors;
+};
+
+const all = async () => {
+  const promocao = await a();
+  const likes = await b();
+  const somatorio = await c();
+  const erros = await d();
+  console.log(promocao, likes, somatorio, erros);
+};
+
+all();
