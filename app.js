@@ -1,4 +1,5 @@
 const axios = require("axios");
+const fs = require('fs');
 
 function filterByPromocao(obj) {
   if (obj.title.includes("promocao")) return true;
@@ -12,6 +13,10 @@ function filterByMediaAndMonth(obj) {
   const medias = ["google_cpc", "facebook_cpc", "instagram_cpc"];
   if (medias.some(el => obj.media.includes(el)) && obj.date.includes("/05/"))
     return true;
+}
+
+function filterById(obj) {
+  
 }
 
 const getPostsPromocao = async () => {
@@ -42,7 +47,12 @@ const getPostsError = async () => {
   const response = await axios.get(
     "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get_error"
   );
-  return response.data.posts;
+  const retorno = [];
+  response.data.posts.map(data => {
+    data = (({product_id, price}) => ({product_id, price}))(data);
+    retorno.push(data);
+  });
+  return retorno;  
 };
 
 function compare(a, b) {
@@ -79,11 +89,11 @@ const a = async () => {
   const posts = await getPostsPromocao();
   posts.sort(compare);
   let aux = posts[0].product_id;
-  posts.map(data => {
-    if (data.product_id !== aux) {
+  posts.map((data, index) => {
+    if (data.product_id !== aux || index === 0) {
       const post = {
-        product_id: data.product_id,
-        price: data.price
+        "product_id": data.product_id,
+        "price_field": data.price
       };
       postsPromocao.push(post);
     }
@@ -98,8 +108,8 @@ const b = async () => {
   posts700.sort(compare);
   posts700.map(data => {
     let post = {
-      product_id: data.product_id,
-      price: data.price
+      "post_id": data.post_id,
+      "price_field": data.price
     };
     resposta.push(post);
   });
@@ -117,8 +127,18 @@ const c = async () => {
 
 const d = async () => {
   const err = await getPostsError();
-  err.sort(compareId);
-  let teste = err[0];
+  const unique = [...new Set(err)];
+  const erros = [];
+  unique.sort(compareId);
+  unique.map(data => {
+    unique.filter(el => {
+      //console.log(el.product_id, data.product_id);
+      if(el.product_id === data.product_id && el.price !== data.price) erros.push(el);
+    })
+  })
+  const errosReal = [...new Set(erros)];
+  console.log(errosReal);
+  /*let teste = err[0];
   let errors = [];
   err.map(data => {
     if (data.product_id === teste.product_id && data.price !== teste.price)
@@ -126,7 +146,41 @@ const d = async () => {
     teste = data;
   });
   return errors;
+  */
 };
+
+const sendAwnser = async () => {
+  const promocao = await a();
+  const likes = await b();
+  const somatorio = await c();
+  const erros = await d();
+  const awnser = {
+    "full_name": "Pedro Paulo Isnard Brando",
+    "email": "pedroibrando@gmail.com",
+    "code_link": 'https://github.com/PedroisBrando/fullstack-raccoon',
+    "response_a": promocao,
+    "response_b": likes,
+    "response_c": somatorio,
+    "response_d": erros,
+  }
+
+  const jsonContent = JSON.stringify(awnser);
+
+  const options = {
+    headers: {'Content-Type': "application/json"}
+  }
+  const res = await axios.post(
+    'https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_post',
+    jsonContent, 
+    options
+  )
+  //console.log(res);
+  //console.log(likes)
+  //console.log(somatorio)
+  console.log(erros);
+}
+
+
 
 const all = async () => {
   const promocao = await a();
@@ -136,4 +190,5 @@ const all = async () => {
   console.log(promocao, likes, somatorio, erros);
 };
 
-all();
+d();
+//sendAwnser();
