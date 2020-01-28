@@ -15,10 +15,6 @@ function filterByMediaAndMonth(obj) {
     return true;
 }
 
-function filterById(obj) {
-  
-}
-
 const getPostsPromocao = async () => {
   const response = await axios.get(
     "https://us-central1-psel-clt-ti-junho-2019.cloudfunctions.net/psel_2019_get"
@@ -133,20 +129,11 @@ const d = async () => {
   unique.map(data => {
     unique.filter(el => {
       //console.log(el.product_id, data.product_id);
-      if(el.product_id === data.product_id && el.price !== data.price) erros.push(el);
+      if(el.product_id === data.product_id && el.price !== data.price) erros.push(el.product_id);
     })
   })
   const errosReal = [...new Set(erros)];
-  console.log(errosReal);
-  /*let teste = err[0];
-  let errors = [];
-  err.map(data => {
-    if (data.product_id === teste.product_id && data.price !== teste.price)
-      errors.push(data.product_id);
-    teste = data;
-  });
-  return errors;
-  */
+  return errosReal;
 };
 
 const sendAwnser = async () => {
@@ -174,21 +161,10 @@ const sendAwnser = async () => {
     jsonContent, 
     options
   )
-  //console.log(res);
+  console.log(res);
   //console.log(likes)
   //console.log(somatorio)
-  console.log(erros);
+  //console.log(erros);
 }
 
-
-
-const all = async () => {
-  const promocao = await a();
-  const likes = await b();
-  const somatorio = await c();
-  const erros = await d();
-  console.log(promocao, likes, somatorio, erros);
-};
-
-d();
-//sendAwnser();
+sendAwnser();
